@@ -15,38 +15,36 @@
 HtmlParser::HtmlParser(const QUrl &url, const QString &text, QObject *parent)
     :
       QObject(parent),
-      _url(url),
-      _found(false),
+      _info(new UrlInfo, [](UrlInfo* p){delete p;}),
       _downloaded(false),
       _text(text),
       _downloader(nullptr)
 {
+    _info->_url = url.toString();
+    _info->_found = false;
+    _info->_status = UrlInfo::DOWNLOADING;
+    _info->_percentage = 0;
+    emit processing(_info.data());
     QThread * thread = new QThread();
     _downloader = new HtmlDownloader(url);
     _downloader->moveToThread(thread);
 
     connect( thread, SIGNAL(started()), _downloader, SLOT(doWork()));
 
-    connect( _downloader, SIGNAL(finished(QSharedPointer<QString>)), thread, SLOT(quit()));
-    connect( _downloader, SIGNAL(finished(QSharedPointer<QString>)), this, SLOT(downloaded(QSharedPointer<QString>)), Qt::ConnectionType::DirectConnection);
-
+    connect( _downloader, SIGNAL(finished(QString)), thread, SLOT(quit()));
+    connect( _downloader, SIGNAL(finished(QString)), this, SLOT(downloaded(QString)), Qt::ConnectionType::DirectConnection);
+    connect(_downloader, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(downloadProgress(qint64,qint64)));
 
     connect( thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
-//    connect( thread, SIGNAL(finished()), _downloader, SLOT(deleteLater()));
 
     thread->start();
 }
 
-bool HtmlParser::operator==(const HtmlParser& other)
+void HtmlParser::downloadProgress(qint64 current,qint64 total)
 {
-    return _url == other._url;
+    _info->_percentage = current/((float)total);
+    emit processing(_info.data());
 }
-
-bool HtmlParser::operator==(const QUrl& another)
-{
-    return _url == another;
-}
-
 
 QSet<HtmlParser *> HtmlParser::get_links() const
 {
@@ -59,7 +57,9 @@ void HtmlParser::parse()
     {
         QThread::msleep(10);
     }
-    _found = _content.contains(_text, Qt::CaseInsensitive);
+    _info->_status = UrlInfo::PARSING;
+    emit processing(_info.data());
+    _info->_found = _content.contains(_text, Qt::CaseInsensitive);
 
 
     int start_offset = -1;
@@ -78,10 +78,12 @@ void HtmlParser::parse()
     if (_downloader)
         delete _downloader;
     _downloader = nullptr;
+    _info->_status = UrlInfo::FINISHED;
+    emit processing(_info.data());
 }
 
-void HtmlParser::downloaded(QSharedPointer<QString> content)
+void HtmlParser::downloaded(QString content)
 {
-    _content = *content.data();
+    _content = content;
     _downloaded = true;
 }

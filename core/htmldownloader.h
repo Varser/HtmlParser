@@ -13,21 +13,23 @@ class HtmlDownloader : public QObject
 public:
     explicit HtmlDownloader(const QUrl& url,QObject *parent = 0);
     HtmlDownloader() = delete;
-    QSharedPointer<QString> get_content() const;
+    QString get_content() const;
 private:
     QNetworkReply* _reply;
-    QSharedPointer<QString> _content;
+    QString _content;
     QUrl _url;
     QNetworkAccessManager* _manager;
 signals:
     //  Obtain download progress
     void downloadProgress(qint64,qint64);
-    void finished(QSharedPointer<QString>);
+    void finished(QString);
 public slots:
     void doWork();
     void download_finished();
+public:
+    static void initialize_threads_count(int count);
 private:
-    static QSemaphore _num_threads;
+    static QSharedPointer<QSemaphore> _num_threads;
 };
 
 #endif // HTMLDOWNLOADER_H

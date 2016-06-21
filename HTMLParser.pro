@@ -18,13 +18,27 @@ TARGET = HTMLParser
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    htmlparser.cpp \
-    objectsthree.cpp \
-    htmldownloader.cpp
+SOURCES +=\
+    ui/basewidget.cpp \
+    ui/entitledwidget.cpp \
+    ui/main.cpp \
+    ui/mainwindow.cpp \
+    ui/numwidget.cpp \
+    ui/processdata.cpp \
+    ui/textwidget.cpp \
+    ui/urltable.cpp \
+    core/htmldownloader.cpp \
+    core/htmlparser.cpp \
+    core/objectsthree.cpp
 
-HEADERS  += mainwindow.h \
-    htmlparser.h \
-    objectsthree.h \
-    htmldownloader.h
+HEADERS  += \
+    ui/basewidget.h \
+    ui/entitledwidget.h \
+    ui/mainwindow.h \
+    ui/numwidget.h \
+    ui/processdata.h \
+    ui/textwidget.h \
+    ui/urltable.h \
+    core/htmldownloader.h \
+    core/htmlparser.h \
+    core/objectsthree.h
